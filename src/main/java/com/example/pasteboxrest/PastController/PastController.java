@@ -1,5 +1,8 @@
 package com.example.pasteboxrest.PastController;
 
+import com.example.pasteboxrest.Exceptions.BoxNotExist;
+import com.example.pasteboxrest.Exceptions.IncorrectHash;
+import com.example.pasteboxrest.Exceptions.NotFindExpInSwitchException;
 import com.example.pasteboxrest.PastModel.PasteBox;
 import com.example.pasteboxrest.PastModel.PasteBoxRequest;
 import com.example.pasteboxrest.PastModel.PasteBoxResponse;
@@ -23,7 +26,7 @@ public class PastController {
     }
 
     @GetMapping("/{hash}")
-    public PasteBox getByHash(@PathVariable String hash) {
+    public PasteBox getByHash(@PathVariable String hash)throws NotFindExpInSwitchException, BoxNotExist, IncorrectHash {
         return service.getByHash(hash);
     }
 

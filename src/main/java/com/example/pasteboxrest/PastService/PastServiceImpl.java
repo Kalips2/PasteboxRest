@@ -1,5 +1,8 @@
 package com.example.pasteboxrest.PastService;
 
+import com.example.pasteboxrest.Exceptions.BoxNotExist;
+import com.example.pasteboxrest.Exceptions.IncorrectHash;
+import com.example.pasteboxrest.Exceptions.NotFindExpInSwitchException;
 import com.example.pasteboxrest.PastModel.PasteBox;
 import com.example.pasteboxrest.PastModel.PasteBoxRequest;
 import com.example.pasteboxrest.PastModel.PasteBoxResponse;
@@ -28,8 +31,8 @@ public class PastServiceImpl implements PastService{
     }
 
     @Override
-    public PasteBox getByHash(String hash) {
-        return repository.getByHash(hash);
+    public PasteBox getByHash(String hash) throws NotFindExpInSwitchException, BoxNotExist, IncorrectHash {
+        return repository.getByHash(hash) ;
     }
 
     @Override
