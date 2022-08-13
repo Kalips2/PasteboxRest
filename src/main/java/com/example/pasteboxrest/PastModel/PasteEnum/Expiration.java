@@ -5,5 +5,5 @@ public enum Expiration {
     HOUR_1,
     HOUR_3,
     WEEK_1,
-    MONTH_1
+    MONTH_1;
 }

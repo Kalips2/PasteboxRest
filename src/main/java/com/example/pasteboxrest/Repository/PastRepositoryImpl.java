@@ -45,6 +45,9 @@ public class PastRepositoryImpl implements PastRepository {
 
     @Override
     public PasteBox getByHash(String hash) throws BoxNotExist, IncorrectHash {
+
+        updateAllActive();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         PasteboxEntity instance;
@@ -70,6 +73,8 @@ public class PastRepositoryImpl implements PastRepository {
     @Override
     public List<PasteBox> getAllPublicPaste() {
 
+        updateAllActive();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         List<PasteboxEntity> instance = em.createQuery("select a from PasteboxEntity a " +
@@ -82,10 +87,6 @@ public class PastRepositoryImpl implements PastRepository {
                 .filter(e -> isAlive(e))
                 .map(e-> new PasteBox(e.getTitle(), e.getBody()))
                 .collect(Collectors.toList());
-
-        instance.stream()
-                .filter(e -> !isAlive(e))
-                .forEach(this::deleteByInstance);
 
         return result;
     }
@@ -121,6 +122,20 @@ public class PastRepositoryImpl implements PastRepository {
         em.remove(attached);
         em.getTransaction().commit();
         em.close();
+    }
+
+    @Override
+    public void updateAllActive() {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        List<PasteboxEntity> instance = em.createQuery("select a from PasteboxEntity a ", PasteboxEntity.class).getResultList();
+        em.getTransaction().commit();
+        em.close();
+
+        instance.stream()
+                .filter(e -> !isAlive(e))
+                .forEach(this::deleteByInstance);
+
     }
 
     public Long getTimeByEnum(Expiration expiration){

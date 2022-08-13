@@ -20,4 +20,6 @@ public interface PastRepository {
     boolean isAlive(PasteboxEntity instance);
 
     void deleteByInstance(PasteboxEntity instance);
+
+    void updateAllActive();
 }

@@ -5,6 +5,7 @@ import com.example.pasteboxrest.Exceptions.IncorrectHash;
 import com.example.pasteboxrest.PastModel.PasteBox;
 import com.example.pasteboxrest.PastModel.PasteBoxRequest;
 import com.example.pasteboxrest.PastModel.PasteBoxResponse;
+import com.example.pasteboxrest.PastModel.PasteEnum.Exposure;
 import com.example.pasteboxrest.PastService.PastServiceImpl;
 import org.springframework.web.bind.annotation.*;
 
