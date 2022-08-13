@@ -2,7 +2,6 @@ package com.example.pasteboxrest.Repository;
 
 import com.example.pasteboxrest.Exceptions.BoxNotExist;
 import com.example.pasteboxrest.Exceptions.IncorrectHash;
-import com.example.pasteboxrest.Exceptions.NotFindExpInSwitchException;
 import com.example.pasteboxrest.PastModel.PasteBox;
 import com.example.pasteboxrest.PastModel.PasteBoxRequest;
 import com.example.pasteboxrest.PastModel.PasteEnum.Expiration;
@@ -13,9 +12,9 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Repository
 public class PastRepositoryImpl implements PastRepository {
@@ -45,7 +44,7 @@ public class PastRepositoryImpl implements PastRepository {
     }
 
     @Override
-    public PasteBox getByHash(String hash) throws NotFindExpInSwitchException, BoxNotExist, IncorrectHash {
+    public PasteBox getByHash(String hash) throws BoxNotExist, IncorrectHash {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         PasteboxEntity instance;
@@ -60,32 +59,34 @@ public class PastRepositoryImpl implements PastRepository {
             em.close();
         }
 
-        if(isAlive(instance.getExpiration(), instance.getTimeCreated())) {
+        if(isAlive(instance)) {
             return new PasteBox(instance.getTitle(), instance.getBody());
         } else {
-            deleteByHash(instance);
+            deleteByInstance(instance);
             throw new BoxNotExist("Pastebox's time is passed and it doesn't exist");
         }
     }
 
     @Override
-    public List<PasteBox> getTenPublicPast() {
+    public List<PasteBox> getAllPublicPaste() {
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        List<Object[]> instance = em.createQuery("select a.title, a.body from PasteboxEntity a " +
+        List<PasteboxEntity> instance = em.createQuery("select a from PasteboxEntity a " +
                 "where a.exposure = 'PUBLIC'" +
-                "order by a.id", Object[].class).setMaxResults(10).getResultList();
+                "order by a.id", PasteboxEntity.class).setMaxResults(10).getResultList();
         em.getTransaction().commit();
         em.close();
 
-        List<PasteBox> result = new ArrayList<>();
-        for (Object[] row : instance) {
-            PasteBox container = new PasteBox();
-            container.setTitle((String) row[0]);
-            container.setBody((String) row[1]);
-            result.add(container);
-        }
+        List<PasteBox> result = instance.stream()
+                .filter(e -> isAlive(e))
+                .map(e-> new PasteBox(e.getTitle(), e.getBody()))
+                .collect(Collectors.toList());
+
+        instance.stream()
+                .filter(e -> !isAlive(e))
+                .forEach(this::deleteByInstance);
+
         return result;
     }
 
@@ -97,12 +98,14 @@ public class PastRepositoryImpl implements PastRepository {
         em.getTransaction().commit();
         em.close();
 
-        if (max == null) max = 1;
+        if (max == null) max = 0;
         return max;
     }
 
     @Override
-    public boolean isAlive(Expiration expiration, Timestamp timestamp) throws NotFindExpInSwitchException {
+    public boolean isAlive(PasteboxEntity instance) {
+        Expiration expiration = instance.getExpiration();
+        Timestamp timestamp = instance.getTimeCreated();
         Long different = getTimeByEnum(expiration);
         Long dif = System.currentTimeMillis() - timestamp.getTime();
         long seconds = TimeUnit.MILLISECONDS.toSeconds(dif);
@@ -111,7 +114,7 @@ public class PastRepositoryImpl implements PastRepository {
     }
 
     @Override
-    public void deleteByHash(PasteboxEntity instance) {
+    public void deleteByInstance(PasteboxEntity instance) {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         PasteboxEntity attached = em.merge(instance);
@@ -120,7 +123,7 @@ public class PastRepositoryImpl implements PastRepository {
         em.close();
     }
 
-    public Long getTimeByEnum(Expiration expiration) throws NotFindExpInSwitchException {
+    public Long getTimeByEnum(Expiration expiration){
         switch (expiration) {
             case HOUR_1 -> {
                 return 60 * 60L;
@@ -138,7 +141,7 @@ public class PastRepositoryImpl implements PastRepository {
                 return 4 * 7 * 24 * 60 * 60L;
             }
             default -> {
-                throw new NotFindExpInSwitchException("Error!");
+                return 0L;
             }
         }
     }

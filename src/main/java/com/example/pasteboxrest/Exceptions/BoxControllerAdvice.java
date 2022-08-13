@@ -17,12 +17,6 @@ public class BoxControllerAdvice{
                 .body(new ErrorResponse(e.getMessage()));
     }
 
-    @ExceptionHandler(NotFindExpInSwitchException.class)
-    public ResponseEntity<?> handleNotFindExpInSwitchException(NotFindExpInSwitchException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(e.getMessage()));
-    }
-
     @ExceptionHandler(IncorrectHash.class)
     public ResponseEntity<?> handleIncorrectHash(IncorrectHash e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
